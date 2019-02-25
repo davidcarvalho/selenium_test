@@ -8,14 +8,10 @@ from io import BytesIO
 from PIL import Image
 from csv import writer
 
-
-# initialize test folder
-test_folder = 'C:\\dev\\selenium_test\\'
-
 # logger initialize
 ts = time.localtime()
 logfile = 'Results' + time.strftime('%Y%m%d_%H%M%S', ts) + '.csv'
-csv_logger = open(test_folder + logfile, 'w', newline='')
+csv_logger = open(logfile, 'w', newline='')
 csv_writer = writer(csv_logger)
 # write header for the logger
 csv_writer.writerow(['TIMESTAMP', 'RESULT', 'STEP DETAILS'])
@@ -23,7 +19,7 @@ csv_logger.close()
 
 # function to write logs of the test
 def write_log(result, step_detail):
-	csv_logger = open(test_folder + logfile, 'a', newline='')
+	csv_logger = open(logfile, 'a', newline='')
 	csv_writer = writer(csv_logger)
 	csv_writer.writerow([time.strftime('%Y%m%d_%H%M%S', ts), result, step_detail])
 	csv_logger.close()
@@ -67,23 +63,20 @@ if __name__ == '__main__':
 	else:
 		write_log('PASS', 'Wikipedia page load success.')
 
-
 	# 2. Verify that the external links in "External links" section work
 	# get locator of external section
 	list_links = driver.find_elements_by_xpath('//span[@id="External_links"]//parent::h2//following-sibling::ul//'
 																						'a[@class="external text"]')
-	write_log(len(list_links))
 	# loop each link for a response
 	for link in list_links:
 		# send a request
 		r = requests.get(link.get_attribute('href'))
 		if r.status_code != 404:
 			# link working
-			write_log('PASS', 'Link ' + link.text + ' working')
+			write_log('PASS', 'Link "' + link.text + '" working')
 		else:
 			# link not working
-			write_log('PASS', 'Link ' + link.text + ' not working')
-
+			write_log('PASS', 'Link "' + link.text + '" not working')
 
 	# 3. Click on the "Oxygen" link on the Periodic table at the bottom of the page
 	# loop for rows
@@ -107,7 +100,6 @@ if __name__ == '__main__':
 	else:
 		write_log('FAIL', 'Element ' + element_to_search + ' page not loaded.')
 
-
 	# 4. Verify that it is a "featured article"
 	try:
 		driver.find_element_by_css_selector('img[alt^="This is a featured article"]')
@@ -116,9 +108,8 @@ if __name__ == '__main__':
 	else:
 		write_log('PASS', 'This is a featured article')
 
-
 	# 5. Take a screen shot of the right hand sidebar that lists its properties
-	image_element = driver.find_element_by_css_selector('table[class="infobox"]>tbody')
+	image_element = driver.find_element_by_css_selector('table[class="infobox"]')
 	# get dimensions of the element to capture
 	location = image_element.location
 	size = image_element.size
@@ -142,18 +133,16 @@ if __name__ == '__main__':
 	right = location['x'] + size['width']
 	bottom = location['y'] + size['height']
 	# crop image
-	im = im.crop((left, top, right, bottom))
+	im = im.crop((left - 20, top, right - 20, bottom))
 	# save image
-	im.save(test_folder + 'screenshot_properties.png')
+	im.save('screenshot_properties' + time.strftime('%Y%m%d_%H%M%S', ts) + '.png')
 	write_log('DONE', 'Saved image in test folder')
-
 
 	# 6. Count the number of pdf links in "Citations" (I assumed this is references as there is no citations on the page)
 	# get the references section
 	element_references = driver.find_element_by_xpath('//span[@id="References"]//parent::h2//following-sibling::div[@class="reflist columns references-column-width"]')
 	# count the number of PDFs in that section and log
 	write_log('DONE', 'The number of PDFs in the references section are: ' + str(len(element_references.find_elements_by_xpath('//span[@ class ="cs1-format"]'))))
-
 
 	# 7. In the search bar on top right enter "pluto" and verify that the 2nd suggestion is "Plutonium"
 	# get the search box and enter string
